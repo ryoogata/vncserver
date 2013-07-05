@@ -12,13 +12,23 @@ execute "apt-get update" do
 end.run_action(:run) if node['platform_family'] == "ubuntu"
 
 
+case node['platform']
+when "amazon"
+	cookbook_file "/etc/yum.repos.d/cent.repo" do
+		owner 'root'
+		group 'root'
+		source "cent.repo"
+		mode "0644"
+	end
+end
+
 # vncserver のインストール
 case node['platform']
 when "ubuntu"
 	package "vnc4server" do
 		action :install
 	end
-when "centos"
+when "centos","amazon"
 	package "tigervnc-server" do
 		action :install
 	end
@@ -34,8 +44,8 @@ when "ubuntu"
 		mode 00755
 		action :create
 	end
-when "centos"
-	directory "/home/root/.vnc" do
+when "centos","amazon"
+	directory "/root/.vnc" do
 		owner "root"
 		group "root"
 		mode 00755
@@ -53,7 +63,7 @@ when "ubuntu"
 		source "xstartup_ubuntu"
 		mode "0755"
 	end
-when "centos"
+when "centos","amazon"
 	cookbook_file "/root/.vnc/xstartup" do
 		owner 'root'
 		group 'root'
@@ -79,7 +89,7 @@ script "vncpasswd" do
        	EOH
 	creates "/home/ubuntu/.vnc/passwd"
 end
-when "centos"
+when "centos","amazon"
 script "vncpasswd" do
 	interpreter "bash"
 	user 'root'
@@ -108,7 +118,7 @@ script "vncserver" do
         EOH
 	environment 'DISPLAY' => ':1'
 end
-when "centos"
+when "centos","amazon"
 service "vncserver" do
 	action :start
 end

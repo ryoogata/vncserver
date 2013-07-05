@@ -1,0 +1,4 @@
+[base]
+name=CentOS-base
+baseurl=http://ftp.riken.jp/Linux/caos/centos/6.4/os/x86_64/
+gpgcheck=0

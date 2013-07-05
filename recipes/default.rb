@@ -12,14 +12,20 @@ execute "apt-get update" do
 end.run_action(:run) if node['platform_family'] == "ubuntu"
 
 
+# vncserver のインストール
 case node['platform']
 when "ubuntu"
 	package "vnc4server" do
 		action :install
 	end
+when "centos"
+	package "tigervnc-server" do
+		action :install
+	end
 end
 
 
+# .vnc directory の作成
 case node['platform']
 when "ubuntu"
 	directory "/home/ubuntu/.vnc" do
@@ -28,35 +34,70 @@ when "ubuntu"
 		mode 00755
 		action :create
 	end
+when "centos"
+	directory "/home/root/.vnc" do
+		owner "root"
+		group "root"
+		mode 00755
+		action :create
+	end
 end
 
 
+# xstartup の設置
 case node['platform']
 when "ubuntu"
 	cookbook_file "/home/ubuntu/.vnc/xstartup" do
 		owner 'ubuntu'
 		group 'ubuntu'
-		source "xstartup"
+		source "xstartup_ubuntu"
+		mode "0755"
+	end
+when "centos"
+	cookbook_file "/root/.vnc/xstartup" do
+		owner 'root'
+		group 'root'
+		source "xstartup_centos"
 		mode "0755"
 	end
 end
 
 
+# VNC ログイン用パスワードの準備
+case node['platform']
+when "ubuntu"
 script "vncpasswd" do
-        interpreter "bash"
+	interpreter "bash"
 	user 'ubuntu'
 	cwd '/home/ubuntu'
-        code <<-EOH
+       	code <<-EOH
 		echo #{node['vncserver']['_VNCSERVER_PASSWORD']} > /home/ubuntu/pass.txt 
 		echo #{node['vncserver']['_VNCSERVER_PASSWORD']} >> /home/ubuntu/pass.txt
 		echo >> /home/ubuntu/pass.txt
 		/usr/bin/vncpasswd < /home/ubuntu/pass.txt
 		rm -rf /home/ubuntu/pass.txt
-        EOH
+       	EOH
 	creates "/home/ubuntu/.vnc/passwd"
+end
+when "centos"
+script "vncpasswd" do
+	interpreter "bash"
+	user 'root'
+	cwd '/root'
+       	code <<-EOH
+		echo #{node['vncserver']['_VNCSERVER_PASSWORD']} > /root/vncpasswd 
+		cat /tmp/vncpasswd | vncpasswd -f > /root/.vnc/passwd
+		rm -rf /root/vncpasswd
+		chmod 600 /root/.vnc/passwd
+       	EOH
+	creates "/root/.vnc/passwd"
+end
 end
 
 
+# vncserver の起動
+case node['platform']
+when "ubuntu"
 script "vncserver" do
         interpreter "bash"
 	user 'ubuntu'
@@ -66,4 +107,9 @@ script "vncserver" do
 		nohup /home/ubuntu/.vnc/xstartup &
         EOH
 	environment 'DISPLAY' => ':1'
+end
+when "centos"
+service "vncserver" do
+	action :start
+end
 end

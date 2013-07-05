@@ -1,1 +1,1 @@
-default["vncserver"]["_VNCSERVER_PASSWORD"] = "bbtower"
+default["vncserver"]["_VNCSERVER_PASSWORD"] = "vncpassword"

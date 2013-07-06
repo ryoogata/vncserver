@@ -22,6 +22,7 @@ when "amazon"
 	end
 end
 
+
 # vncserver のインストール
 case node['platform']
 when "ubuntu"
@@ -29,8 +30,12 @@ when "ubuntu"
 		action :install
 	end
 when "centos","amazon"
-	package "tigervnc-server" do
-		action :install
+	%w{
+		tigervnc-server xterm
+	}.each do |package_name|
+		package "#{package_name}" do
+			action :install
+		end
 	end
 end
 

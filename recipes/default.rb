@@ -35,6 +35,18 @@ when "centos","amazon"
 end
 
 
+# vncserver の設定ファイルの設置
+case node['platform']
+when "centos","amazon"
+	cookbook_file "/etc/sysconfig/vncservers" do
+		owner 'root'
+		group 'root'
+		source "vncservers"
+		mode "0755"
+	end
+end
+
+
 # .vnc directory の作成
 case node['platform']
 when "ubuntu"
@@ -96,7 +108,7 @@ script "vncpasswd" do
 	cwd '/root'
        	code <<-EOH
 		echo #{node['vncserver']['_VNCSERVER_PASSWORD']} > /root/vncpasswd 
-		cat /tmp/vncpasswd | vncpasswd -f > /root/.vnc/passwd
+		cat /root/vncpasswd | vncpasswd -f > /root/.vnc/passwd
 		rm -rf /root/vncpasswd
 		chmod 600 /root/.vnc/passwd
        	EOH
